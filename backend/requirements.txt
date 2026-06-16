@@ -1,0 +1,24 @@
+# TravelAssistant v2 backend
+# Python 3.10 (conda env: travel_assistant)
+
+# 多智能体编排
+langgraph==1.2.4
+langchain-core==1.4.0
+langchain-openai==1.2.2
+
+# MCP <-> LangChain 桥接(异步)
+langchain-mcp-adapters==0.2.2
+mcp==1.27.1
+
+# Web 服务
+fastapi==0.136.1
+uvicorn==0.47.0
+
+# 基础
+pydantic==2.13.4
+python-dotenv==1.2.2
+httpx==0.28.1
+
+# 高德 MCP server 通过 uvx 拉起(无需 pip 安装):
+#   uvx amap-mcp-server
+# 需要本机已安装 uv / uvx。

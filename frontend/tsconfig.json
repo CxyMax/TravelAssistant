@@ -1,0 +1,17 @@
+// This file affects .ts files like api.ts and type.ts.
+{
+  "compilerOptions": {
+    "target": "ES2020", // Use modern JavaScript features.
+    "module": "ESNext", // Use ES modules for better tree-shaking and compatibility with modern bundlers.
+    "moduleResolution": "Bundler", // Use 'Bundler' for better compatibility with modern bundlers like Vite.
+    "strict": true, // Enable all strict type-checking options.
+    "esModuleInterop": true, // Enable interoperability between CommonJS and ES modules.
+    "skipLibCheck": true, // Skip type checking of declaration files for faster compilation.
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "types": ["vite/client"]
+  },
+  "include": ["./**/*.ts", "./**/*.d.ts", "./**/*.vue"]
+}
