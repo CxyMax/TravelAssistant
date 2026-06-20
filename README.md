@@ -1,4 +1,4 @@
-# 智能旅行助手 TravelAssistant v3
+# 智能旅行助手 TravelAssistant
 
 基于**多智能体协作**与**高德地图(Amap)MCP** 的旅行行程规划系统。
 输入目的地和一句话需求,系统自动检索真实的景点 / 酒店 / 餐厅 / 天气,
@@ -53,38 +53,38 @@
 | 后端 | FastAPI + Uvicorn(异步) |
 | 前端 | Vue 3 + Vite + TypeScript + ant-design-vue |
 
-## 相比初代版本(v1)的改进
+## 改进
 
-v1 是最初的公开版本(基于 `hello_agents`),能跑通但有几个结构性问题。v3 做了彻底重写并新增了多项能力。
+最初的公开版本( `hello_agents`),能跑通但有几个结构性问题，基于此做了彻底重写并新增了多项能力。
 
 ### 1. Agent 编排:串行阻塞 → 并行异步
 
-- **v1**:`景点 → 天气 → 酒店 → 规划` 四个 Agent **依次同步执行**(`agent.run()` 阻塞),总耗时是各段之和。
-- **v3**:LangGraph `StateGraph`,四个专家从 `START` **并行 fan-out**,规划器靠多入边天然形成 barrier,
+- **Origin**:`景点 → 天气 → 酒店 → 规划` 四个 Agent **依次同步执行**(`agent.run()` 阻塞),总耗时是各段之和。
+- **Now**:LangGraph `StateGraph`,四个专家从 `START` **并行 fan-out**,规划器靠多入边天然形成 barrier,
   等全部完成后再组装。整体延迟大幅下降。
 
 ### 2. MCP 工具:每次调用重启子进程 → 单一持久会话
 
-- **v1**:`hello_agents.MCPTool` 同步执行,且**每次工具调用都重新拉起一个 `uvx amap-mcp-server` 子进程**,开销巨大。
-- **v3**:官方 `langchain-mcp-adapters`,应用启动时打开**一个持久 MCP 会话**,所有工具均为原生 `async`、复用同一子进程;
+- **Origin**:`hello_agents.MCPTool` 同步执行,且**每次工具调用都重新拉起一个 `uvx amap-mcp-server` 子进程**,开销巨大。
+- **Now**:官方 `langchain-mcp-adapters`,应用启动时打开**一个持久 MCP 会话**,所有工具均为原生 `async`、复用同一子进程;
   并用信号量做全局并发限流 + QPS 超限退避重试,适配高德免费配额。
 
 ### 3. 规划器:解析自由文本 + 编造坐标 → 纯编排
 
-- **v1**:三个专家只返回**自由文本**,规划 Agent 要自己解析、**编造坐标**、再手拼整份 JSON——既慢又不稳,坐标常是假的。
-- **v3**:专家通过 `with_structured_output` 直接产出**结构化数据 + 真实坐标**(经 `maps_search_detail` / `maps_geo`);
+- **Origin**:三个专家只返回**自由文本**,规划 Agent 要自己解析、**编造坐标**、再手拼整份 JSON——既慢又不稳,坐标常是假的。
+- **Now**:专家通过 `with_structured_output` 直接产出**结构化数据 + 真实坐标**(经 `maps_search_detail` / `maps_geo`);
   规划器只负责分配天数、选酒店、配餐、算预算。
 
 ### 4. 偏好与"必去":标签勾选 → 自由文本拆分 + 地图选点
 
-- **v1**:用 `preferences` 标签勾选;无法精确指定"必去某地"。
-- **v3**:删除标签,改用 **splitter** 把 `free_text_input` 拆成各专家搜索关键词,真正驱动检索;
+- **Origin**:用 `preferences` 标签勾选;无法精确指定"必去某地"。
+- **Now**:删除标签,改用 **splitter** 把 `free_text_input` 拆成各专家搜索关键词,真正驱动检索;
   另外用户可在**前端地图**搜索并选定真实 POI(`must_go`,带坐标),规划时**保证排入**且作为路线锚点。
 
 ### 5. 全新能力:交互式微调
 
-- **v1**:不满意只能从头再来。
-- **v3**:`/trip/plan` 返回 `session_id` 并缓存候选池;用户带反馈调用 `/trip/refine`,
+- **Origin**:不满意只能从头再来。
+- **Now**:`/trip/plan` 返回 `session_id` 并缓存候选池;用户带反馈调用 `/trip/refine`,
   **复用候选池只重新规划**(~30s),必要时才重搜个别专家。偏好以**有界约束列表**累积(不回放原始对话)。
 
 > 仓库内 `TravelAssistant_v3/` 即当前版本;v1 重写过程中还有一个中间版本 v2(LangGraph 化),此处不展开。
@@ -161,3 +161,5 @@ npm run build    # 生产构建(含 vue-tsc 类型检查)
 - LLM 走 DashScope 国内 endpoint;本机若设了 `ALL_PROXY=socks://...` 会让 httpx 崩溃,故 `make_llm()` 用 `trust_env=False` 忽略代理。
 - `/trip/plan` 跑整张多智能体图约 2.5–3 分钟(各专家并行,但每个有多次串行 LLM + amap 往返,且受高德并发限流);前端 axios 超时已设为 5 分钟。
 - 会话为进程内存,服务重启即失效——前端遇 404 会提示重新生成。
+
+                    

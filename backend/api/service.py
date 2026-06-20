@@ -36,7 +36,7 @@ class TripPlannerService:
         self._router = None
         self._sessions = SessionStore()
 
-    @classmethod
+    @classmethod # 异步初始化？
     async def create(cls) -> "TripPlannerService":
         """异步初始化(启动 MCP server、编译图、构建可单独调用的节点)。"""
         service = cls()
